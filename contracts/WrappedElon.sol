@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.22;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -14,7 +14,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract WrappedElon is ERC20, Ownable {
     // The original ELON token contract address.
-    ERC20 public elon = ERC20(0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3);
+    ERC20 public constant elon = ERC20(0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3);
+
+    // The minimum amount of ELON that can be wrapped
+    uint256 public constant MIN_ELON_AMOUNT = 100_000_000_000_000;
 
     // Flags to control the wrap and unwrap functionality.
     bool public wrapEnabled = true;
@@ -43,9 +46,9 @@ contract WrappedElon is ERC20, Ownable {
      */
     function wrap(uint256 elonAmount) public {
         require(wrapEnabled, "Wrapping currently disabled");
-        require(elonAmount >= 100_000_000_000_000, "Can only wrap 0.0001 ELON or greater");
-        uint256 wrappedAmount = elonAmount / 100_000_000_000_000;
-        uint256 wrappableElon = wrappedAmount * 100_000_000_000_000;
+        require(elonAmount >= MIN_ELON_AMOUNT, "Can only wrap 0.0001 ELON or greater");
+        uint256 wrappedAmount = elonAmount / MIN_ELON_AMOUNT;
+        uint256 wrappableElon = wrappedAmount * MIN_ELON_AMOUNT;
         elon.transferFrom(msg.sender, address(this), wrappableElon);
         _mint(msg.sender, wrappedAmount);
         emit Wrap(msg.sender, wrappableElon, wrappedAmount);
@@ -58,7 +61,7 @@ contract WrappedElon is ERC20, Ownable {
     function unwrap(uint256 wrappedAmount) public {
         require(unwrapEnabled, "Unwrapping currently disabled");
         require(wrappedAmount > 0, "Cannot unwrap zero tokens");
-        uint256 elonAmount = wrappedAmount * 100_000_000_000_000;
+        uint256 elonAmount = wrappedAmount * MIN_ELON_AMOUNT;
         _burn(msg.sender, wrappedAmount);
         elon.transfer(msg.sender, elonAmount);
         emit Unwrap(msg.sender, elonAmount, wrappedAmount);
