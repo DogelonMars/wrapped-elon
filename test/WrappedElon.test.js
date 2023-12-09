@@ -8,7 +8,7 @@ describe("WrappedElon", () => {
     const notOwner = (await hre.ethers.getSigners())[1]
     const WrappedElon = await ethers.getContractFactory("WrappedElon");
     const wrappedElon = await WrappedElon.deploy();
-    const elonAddress = await wrappedElon.elon()
+    const elonAddress = await wrappedElon.ELON()
     const mockErc20Artifact = await hre.artifacts.readArtifact("MockERC20")
     await hre.network.provider.send('hardhat_setCode', [elonAddress, mockErc20Artifact.deployedBytecode])
     const elon = await hre.ethers.getContractAt("MockERC20", elonAddress)
@@ -19,7 +19,7 @@ describe("WrappedElon", () => {
   describe("Deployment", () => {
     it("should have elon address set correctly", async function () {
       const { elon, wrappedElon } = await loadFixture(deployWrappedElonFixture);
-      expect(await wrappedElon.elon()).to.equal(elon.address);
+      expect(await wrappedElon.ELON()).to.equal(elon.address);
     });
   });
   describe("WrappedElon", () => {

@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract WrappedElon is ERC20, Ownable {
     // The original ELON token contract address.
-    ERC20 public constant elon = ERC20(0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3);
+    ERC20 public constant ELON = ERC20(0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3);
 
     // The minimum amount of ELON that can be wrapped
     uint256 public constant MIN_ELON_AMOUNT = 100_000_000_000_000;
@@ -49,7 +49,7 @@ contract WrappedElon is ERC20, Ownable {
         require(elonAmount >= MIN_ELON_AMOUNT, "Can only wrap 0.0001 ELON or greater");
         uint256 wrappedAmount = elonAmount / MIN_ELON_AMOUNT;
         uint256 wrappableElon = wrappedAmount * MIN_ELON_AMOUNT;
-        elon.transferFrom(msg.sender, address(this), wrappableElon);
+        ELON.transferFrom(msg.sender, address(this), wrappableElon);
         _mint(msg.sender, wrappedAmount);
         emit Wrap(msg.sender, wrappableElon, wrappedAmount);
     }
@@ -63,7 +63,7 @@ contract WrappedElon is ERC20, Ownable {
         require(wrappedAmount > 0, "Cannot unwrap zero tokens");
         uint256 elonAmount = wrappedAmount * MIN_ELON_AMOUNT;
         _burn(msg.sender, wrappedAmount);
-        elon.transfer(msg.sender, elonAmount);
+        ELON.transfer(msg.sender, elonAmount);
         emit Unwrap(msg.sender, elonAmount, wrappedAmount);
     }
 
