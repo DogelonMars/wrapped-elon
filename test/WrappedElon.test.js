@@ -5,6 +5,7 @@ const { expect } = require("chai");
 describe("WrappedElon", () => {
   async function deployWrappedElonFixture() {
     const signer = (await hre.ethers.getSigners())[0]
+    const notOwner = (await hre.ethers.getSigners())[1]
     const WrappedElon = await ethers.getContractFactory("WrappedElon");
     const wrappedElon = await WrappedElon.deploy();
     const elonAddress = await wrappedElon.elon()
@@ -12,7 +13,7 @@ describe("WrappedElon", () => {
     await hre.network.provider.send('hardhat_setCode', [elonAddress, mockErc20Artifact.deployedBytecode])
     const elon = await hre.ethers.getContractAt("MockERC20", elonAddress)
     await elon.mintTo(signer.address, 10_000_000_000_000_000n)
-    return { elon, wrappedElon, signer };
+    return { elon, wrappedElon, signer, notOwner };
   }
 
   describe("Deployment", () => {
@@ -167,6 +168,15 @@ describe("WrappedElon", () => {
       await wrappedElon.setEnabledState(true, true);
       await elon.approve(wrappedElon.address, elonAmount)
       await expect(wrappedElon.unwrap(10)).to.not.be.reverted
+    })
+  })
+
+  describe("Only owner", () => {
+    it("fails when non-owner tries to set enabled state", async () => {
+      const { wrappedElon, notOwner } = await loadFixture(deployWrappedElonFixture);
+      await expect(wrappedElon.connect(notOwner).setEnabledState(false, false)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      )
     })
   })
 });
