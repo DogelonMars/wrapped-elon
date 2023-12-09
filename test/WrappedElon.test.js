@@ -65,6 +65,23 @@ describe("WrappedElon", () => {
       expect(formattedElonAmount).eq('0.0001')
       expect(formattedElonAmount).eq(formattedWrappedAmount)
     })
+
+    it("fails to wrap when disabled", async () => {
+      const { elon, wrappedElon } = await loadFixture(deployWrappedElonFixture);
+      await wrappedElon.setEnabledState(false, true);
+      const elonAmount = 100_000_000_000_000
+      await elon.approve(wrappedElon.address, elonAmount)
+      await expect(wrappedElon.wrap(elonAmount)).to.be.revertedWith("Wrapping currently disabled");
+    })
+
+    it("wraps after enabling from disabled state", async () => {
+      const { elon, wrappedElon } = await loadFixture(deployWrappedElonFixture);
+      await wrappedElon.setEnabledState(false, true);
+      await wrappedElon.setEnabledState(true, true);
+      const elonAmount = 100_000_000_000_000
+      await elon.approve(wrappedElon.address, elonAmount)
+      await expect(wrappedElon.wrap(elonAmount)).to.not.be.reverted
+    })
   })
 
   describe("Unwrap", () => {
@@ -121,6 +138,35 @@ describe("WrappedElon", () => {
 
       expect(elonAmountAfterUnwrap.sub(elonAmountAfterWrap).eq(1_000_000_000_000_000)).to.be.true
       expect(wrappedAmountAfterUnwrap.eq(0)).to.be.true
+    })
+
+    it("fails to unwrap when disabled", async () => {
+      const { elon, wrappedElon } = await loadFixture(deployWrappedElonFixture);
+
+      // Wrap
+      const elonAmount = 1_000_000_000_000_000
+      await elon.approve(wrappedElon.address, elonAmount)
+      await wrappedElon.wrap(elonAmount)
+
+      // Disable + Unwrap
+      await wrappedElon.setEnabledState(true, false);
+      await elon.approve(wrappedElon.address, elonAmount)
+      await expect(wrappedElon.unwrap(10)).to.be.revertedWith("Unwrapping currently disabled");
+    })
+
+    it("unwraps after enabling from disabled state", async () => {
+      const { elon, wrappedElon } = await loadFixture(deployWrappedElonFixture);
+
+      // Wrap
+      const elonAmount = 1_000_000_000_000_000
+      await elon.approve(wrappedElon.address, elonAmount)
+      await wrappedElon.wrap(elonAmount)
+
+      // Disable + Unwrap
+      await wrappedElon.setEnabledState(true, false);
+      await wrappedElon.setEnabledState(true, true);
+      await elon.approve(wrappedElon.address, elonAmount)
+      await expect(wrappedElon.unwrap(10)).to.not.be.reverted
     })
   })
 });
