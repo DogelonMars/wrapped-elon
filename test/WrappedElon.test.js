@@ -8,7 +8,7 @@ describe("WrappedElon", () => {
     const notOwner = (await hre.ethers.getSigners())[1]
     const WrappedElon = await ethers.getContractFactory("WrappedElon");
     const wrappedElon = await WrappedElon.deploy();
-    const elonAddress = await wrappedElon.ELON()
+    const elonAddress = "0x761D38e5ddf6ccf6Cf7c55759d5210750B5D60F3"
     const mockErc20Artifact = await hre.artifacts.readArtifact("MockERC20")
     await hre.network.provider.send('hardhat_setCode', [elonAddress, mockErc20Artifact.deployedBytecode])
     const elon = await hre.ethers.getContractAt("MockERC20", elonAddress)
@@ -16,12 +16,6 @@ describe("WrappedElon", () => {
     return { elon, wrappedElon, signer, notOwner };
   }
 
-  describe("Deployment", () => {
-    it("should have elon address set correctly", async function () {
-      const { elon, wrappedElon } = await loadFixture(deployWrappedElonFixture);
-      expect(await wrappedElon.ELON()).to.equal(elon.address);
-    });
-  });
   describe("WrappedElon", () => {
     it("fails if minimum elon amount is not met", async () => {
       const { elon, wrappedElon } = await loadFixture(deployWrappedElonFixture);
@@ -30,12 +24,14 @@ describe("WrappedElon", () => {
       await expect(wrappedElon.wrap(insufficientDogelon)).to.be.revertedWith("Can only wrap 0.0001 ELON or greater");
     });
 
-    it("wraps minimally", async () => {
+    it("wraps minimally and emits event", async () => {
       const { elon, wrappedElon, signer } = await loadFixture(deployWrappedElonFixture);
       const elonAmount = 100_000_000_000_000
       await elon.approve(wrappedElon.address, elonAmount)
       const elonBalanceBefore = await elon.balanceOf(signer.address)
-      await wrappedElon.wrap(elonAmount)
+      const tx = await wrappedElon.wrap(elonAmount)
+      expect(tx).to.emit(wrappedElon, "Wrap")
+        .withArgs(signer.address, elonAmount, 1)
       const elonBalanceAfter = await elon.balanceOf(signer.address)
       const wrappedBalance = await wrappedElon.balanceOf(signer.address)
       expect(elonBalanceBefore.sub(elonBalanceAfter).eq(elonAmount)).to.be.true
@@ -65,6 +61,14 @@ describe("WrappedElon", () => {
       const formattedWrappedAmount = utils.formatUnits(wrappedBalance, 4)
       expect(formattedElonAmount).eq('0.0001')
       expect(formattedElonAmount).eq(formattedWrappedAmount)
+    })
+
+    it("emits event when unwrap is disabled", async () => {
+      const { wrappedElon } = await loadFixture(deployWrappedElonFixture);
+
+      const tx = await wrappedElon.setEnabledState(false, true);
+      expect(tx).to.emit(wrappedElon, "WrapEnabled").withArgs(false)
+      expect(tx).to.not.emit(wrappedElon, "UnwrapEnabled")
     })
 
     it("fails to wrap when disabled", async () => {
@@ -123,7 +127,7 @@ describe("WrappedElon", () => {
       expect(wrappedAmountAfterUnwrap.eq(5)).to.be.true
     })
 
-    it("unwraps absolutely", async () => {
+    it("unwraps absolutely and emits event", async () => {
       const { elon, wrappedElon, signer } = await loadFixture(deployWrappedElonFixture);
 
       // Wrap
@@ -133,12 +137,22 @@ describe("WrappedElon", () => {
       const elonAmountAfterWrap = await elon.balanceOf(signer.address)
 
       // Unwraps everything
-      await wrappedElon.unwrap(10)
+      const tx = await wrappedElon.unwrap(10)
+      expect(tx).to.emit(wrappedElon, "Unwrap")
+        .withArgs(signer.address, elonAmount, 10)
       const elonAmountAfterUnwrap = await elon.balanceOf(signer.address)
       const wrappedAmountAfterUnwrap = await wrappedElon.balanceOf(signer.address)
 
       expect(elonAmountAfterUnwrap.sub(elonAmountAfterWrap).eq(1_000_000_000_000_000)).to.be.true
       expect(wrappedAmountAfterUnwrap.eq(0)).to.be.true
+    })
+
+    it("emits event when unwrap is disabled", async () => {
+      const { wrappedElon } = await loadFixture(deployWrappedElonFixture);
+
+      const tx = await wrappedElon.setEnabledState(true, false);
+      expect(tx).to.emit(wrappedElon, "UnwrapEnabled").withArgs(false)
+      expect(tx).to.not.emit(wrappedElon, "WrapEnabled")
     })
 
     it("fails to unwrap when disabled", async () => {
