@@ -48,7 +48,7 @@ contract WrappedElon is ERC20, Ownable2Step {
      * @dev Allows users to wrap their ELON tokens into WrappedElon tokens.
      * @param elonAmount The amount of ELON tokens to be wrapped.
      */
-    function wrap(uint256 elonAmount) public {
+    function wrap(uint256 elonAmount) external {
         require(wrapEnabled, "Wrapping currently disabled");
         require(elonAmount >= MIN_ELON_AMOUNT, "Can only wrap 0.0001 ELON or greater");
         uint256 wrappedAmount = elonAmount / MIN_ELON_AMOUNT;
@@ -62,7 +62,7 @@ contract WrappedElon is ERC20, Ownable2Step {
      * @dev Allows users to unwrap their WrappedElon tokens back into the original ELON tokens.
      * @param wrappedAmount The amount of WrappedElon tokens to be unwrapped.
      */
-    function unwrap(uint256 wrappedAmount) public {
+    function unwrap(uint256 wrappedAmount) external {
         require(unwrapEnabled, "Unwrapping currently disabled");
         require(wrappedAmount > 0, "Cannot unwrap zero tokens");
         uint256 elonAmount = wrappedAmount * MIN_ELON_AMOUNT;
@@ -76,7 +76,7 @@ contract WrappedElon is ERC20, Ownable2Step {
      * @param _wrapEnabled The new state of the wrap functionality.
      * @param _unwrapEnabled The new state of the unwrap functionality.
      */
-    function setEnabledState(bool _wrapEnabled, bool _unwrapEnabled) public onlyOwner {
+    function setEnabledState(bool _wrapEnabled, bool _unwrapEnabled) external onlyOwner {
         if (wrapEnabled != _wrapEnabled) {
             wrapEnabled = _wrapEnabled;
             emit WrapEnabled(_wrapEnabled);
