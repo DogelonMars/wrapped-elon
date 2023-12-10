@@ -30,7 +30,7 @@ contract WrappedElon is ERC20, Ownable {
     /**
      * @dev Sets the name and symbol for the WrappedElon token.
      */
-    constructor() ERC20("ELON", "Dogelon Mars") {}
+    constructor() ERC20("Dogelon Mars", "ELON") {}
 
     /**
      * @dev Overrides the decimals function to set a fixed decimal count.
