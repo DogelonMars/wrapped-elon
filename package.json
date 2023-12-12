@@ -6,6 +6,7 @@
   "scripts": {
     "test": "yarn hardhat test",
     "deploy": "yarn hardhat run scripts/deploy.js",
+    "deploy-mainnet": "yarn hardhat run scripts/deploy.js --network mainnet",
     "create-etherscan-verify-json": "yarn hardhat run scripts/createEtherscanVerificationJson.js"
   },
   "dependencies": {
